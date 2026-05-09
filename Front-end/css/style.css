@@ -341,3 +341,67 @@ footer {
 .policy a:hover{
     color:#f3c07a
 }
+
+
+/* configuracion de usuario estilos*/
+
+
+
+#titulo {
+    display: flex;
+    justify-content: center;
+    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+font-weight: bold;
+font-size: 1.3rem;
+margin: 10px;
+margin-bottom:  50px;
+}
+
+.personal-data {
+    display: flex;
+    columns: 2;
+
+}
+.config-user {
+    position: relative;
+    border-top: 1px solid black;
+    width: 100%;
+    column-count: 2;
+}
+.config-user label {
+    display: flex;
+    text-align: center;
+    padding: 10px;
+    display: flex;
+    margin: 0 20px 20px 40px;
+    columns: 2;
+;
+}
+.enviar-data{
+    position: absolute;
+    right: 20px;
+    border-radius: 30px;
+    width: 150px;
+    height: 40px;
+    bottom: 10px;
+    border: 1px solid black
+
+}
+
+.datos-cuenta {
+    position: relative;
+    border-top: 1px solid black;
+    width: 100%;
+    column-count: 2;
+    min-height: 200px;
+}
+
+.datos-cuenta label {
+    display: flex;
+    text-align: center;
+    padding: 10px;
+    display: flex;
+    margin: 0 20px 20px 40px;
+    columns: 2;
+;
+}
