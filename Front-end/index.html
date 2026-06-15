@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hospital Los Andes – Turnos</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /* ── TOKENS ─────────────────────────────────────── */
+    :root {
+      --azul:        #1b77e5;
+      --azul-oscuro: #1256b0;
+      --azul-hover:  #18549c;
+      --fondo:       #f0f4fa;
+      --blanco:      #ffffff;
+      --gris-borde:  #d1dce8;
+      --texto:       #1a2333;
+      --texto-suave: #5a6a80;
+      --verde:       #22c55e;
+      --rojo:        #ef4444;
+      --amarillo:    #f59e0b;
+      --radio:       10px;
+      --sombra:      0 2px 12px rgba(27,119,229,0.10);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; border: none; }
+    html { font-size: 15px; font-family: 'Inter', sans-serif; background: var(--fondo); color: var(--texto); }
+    a { text-decoration: none; color: inherit; }
+    ul { list-style: none; }
+
+    /* ── LAYOUT ─────────────────────────────────────── */
+    body {
+      display: grid;
+      grid-template-rows: 56px 1fr auto;
+      grid-template-columns: 280px 1fr;
+      grid-template-areas:
+        "header header"
+        "aside  main"
+        "footer footer";
+      min-height: 100vh;
+    }
+
+    /* ── HEADER ─────────────────────────────────────── */
+    header {
+      grid-area: header;
+      background: var(--azul);
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      gap: 16px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+    }
+    #logo { display: flex; align-items: center; gap: 8px; color: #fff; width: 220px; flex-shrink: 0; }
+    #logo-texto { font-family: 'Libre Baskerville', serif; line-height: 1.1; }
+    #logo-texto span { display: block; font-size: 0.78rem; letter-spacing: 2px; color: rgba(255,255,255,0.9); }
+    #logo-texto span:first-child { font-size: 0.95rem; font-weight: 700; color: #fff; }
+
+    nav { flex: 1; }
+    #link-var { display: flex; gap: 4px; justify-content: center; }
+    .link-a {
+      display: block; padding: 6px 18px; color: rgba(255,255,255,0.85);
+      font-size: 0.88rem; font-weight: 500; border-radius: 6px;
+      transition: background 0.2s, color 0.2s; cursor: pointer;
+    }
+    .link-a:hover, .link-a.activo { background: var(--azul-hover); color: #fff; }
+
+    #usuario-btn-contenedor { position: relative; margin-left: auto; }
+    #contenedor-miniatura-usuario {
+      display: flex; align-items: center; justify-content: center;
+      width: 38px; height: 38px;
+      background: var(--azul-hover);
+      border: 2px solid rgba(255,255,255,0.3);
+      border-radius: 50%; cursor: pointer; transition: background 0.2s;
+    }
+    #contenedor-miniatura-usuario:hover { background: #0e3d7a; }
+
+    .dropdown-menu {
+      position: absolute; top: calc(100% + 10px); right: 0;
+      background: var(--blanco); border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+      width: 230px; max-height: 0; overflow: hidden;
+      transition: max-height 0.35s ease;
+    }
+    .dropdown-menu.open-menu { max-height: 320px; }
+    .dropdown-wrapper { padding: 14px; }
+    .user-info { display: flex; align-items: center; gap: 10px; padding-bottom: 10px; }
+    .user-info h2 { font-size: 0.95rem; font-weight: 600; }
+    .user-info p { font-size: 0.78rem; color: var(--texto-suave); }
+    .dropdown-menu hr { height: 1px; background: var(--gris-borde); margin: 4px 0 10px; }
+    .menu-options a { display: block; padding: 8px 6px; font-size: 0.88rem; color: var(--texto); border-radius: 6px; transition: background 0.2s; }
+    .menu-options a:hover { background: var(--fondo); }
+    /* Admin link oculto por defecto */
+    #menu-admin-link { display: none; }
+
+    /* ── ASIDE ─────────────────────────────────────── */
+    aside {
+      grid-area: aside; background: var(--blanco);
+      border-right: 1px solid var(--gris-borde);
+      padding: 20px 14px; display: flex; flex-direction: column; gap: 16px;
+    }
+    .aside-titulo { font-family: 'Libre Baskerville', serif; font-size: 1rem; font-weight: 700; color: var(--azul); padding-bottom: 8px; border-bottom: 2px solid var(--azul); }
+    .calendario-wrapper { flex: 1; border-radius: var(--radio); overflow: hidden; border: 1px solid var(--gris-borde); min-height: 380px; }
+    .calendario-wrapper iframe { width: 100%; height: 100%; min-height: 380px; display: block; border: none; }
+    .aside-nota { font-size: 0.75rem; color: var(--texto-suave); line-height: 1.5; background: var(--fondo); border-radius: 8px; padding: 8px 10px; }
+
+    /* ── MAIN ────────────────────────────────────────── */
+    main { grid-area: main; padding: 24px 28px; min-height: 600px; }
+
+    /* Vistas */
+    .vista { display: none; }
+    .vista.activa { display: block; }
+
+    /* Filtros */
+    .filtros-card { background: var(--blanco); border: 1px solid var(--gris-borde); border-radius: var(--radio); padding: 16px 20px; box-shadow: var(--sombra); margin-bottom: 24px; }
+    .filtros-card h2 { font-family: 'Libre Baskerville', serif; font-size: 1rem; margin-bottom: 12px; color: var(--azul); }
+    .filtros-fila { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
+    .filtro-grupo { display: flex; flex-direction: column; gap: 4px; }
+    .filtro-grupo label { font-size: 0.78rem; font-weight: 600; color: var(--texto-suave); text-transform: uppercase; letter-spacing: 0.5px; }
+    .filtro-grupo select, .filtro-grupo input { padding: 7px 12px; border: 1px solid var(--gris-borde); border-radius: 7px; font-size: 0.88rem; background: var(--fondo); color: var(--texto); min-width: 150px; font-family: 'Inter', sans-serif; }
+    .btn-buscar { padding: 8px 22px; background: var(--azul); color: #fff; border-radius: 7px; font-size: 0.88rem; font-weight: 600; cursor: pointer; transition: background 0.2s; align-self: flex-end; }
+    .btn-buscar:hover { background: var(--azul-oscuro); }
+
+    /* Sección turnos */
+    .turnos-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+    .turnos-header h2 { font-family: 'Libre Baskerville', serif; font-size: 1.2rem; color: var(--texto); }
+    .badge-count { background: var(--azul); color: #fff; font-size: 0.75rem; font-weight: 700; padding: 2px 10px; border-radius: 20px; }
+
+    /* Grilla de tarjetas */
+    #contenedor-turnos, #contenedor-mis-turnos {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 18px;
+    }
+
+    /* Tarjeta */
+    .turno-card { background: var(--blanco); border: 1px solid var(--gris-borde); border-radius: var(--radio); box-shadow: var(--sombra); overflow: hidden; display: flex; flex-direction: column; transition: transform 0.18s, box-shadow 0.18s; }
+    .turno-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(27,119,229,0.15); }
+    .card-barra { height: 5px; width: 100%; }
+    .turno-card.pendiente  .card-barra { background: var(--amarillo); }
+    .turno-card.confirmada .card-barra { background: var(--verde); }
+    .turno-card.cancelado  .card-barra { background: var(--rojo); }
+    .card-body { padding: 16px; flex: 1; display: flex; flex-direction: column; gap: 6px; }
+    .card-especialidad { font-family: 'Libre Baskerville', serif; font-size: 0.98rem; font-weight: 700; color: var(--texto); }
+    .card-medico { font-size: 0.82rem; color: var(--texto-suave); margin-bottom: 4px; }
+    .card-datos { display: flex; flex-direction: column; gap: 4px; margin: 4px 0 10px; }
+    .card-dato { display: flex; align-items: center; gap: 6px; font-size: 0.83rem; color: var(--texto); }
+    .card-dato .icon { color: var(--azul); font-size: 0.9rem; }
+    .card-estado { display: inline-flex; align-items: center; gap: 5px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; padding: 3px 10px; border-radius: 20px; width: fit-content; margin-bottom: 10px; }
+    .turno-card.pendiente  .card-estado { background: #fffbeb; color: #92400e; }
+    .turno-card.confirmada .card-estado { background: #f0fdf4; color: #166534; }
+    .turno-card.cancelado  .card-estado { background: #fef2f2; color: #991b1b; }
+    .card-acciones { display: flex; gap: 8px; margin-top: auto; }
+    .btn-agendar, .btn-cancelar { flex: 1; padding: 8px 6px; border-radius: 7px; font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: background 0.18s, opacity 0.18s; font-family: 'Inter', sans-serif; }
+    .btn-agendar { background: var(--verde); color: #fff; }
+    .btn-agendar:hover:not(:disabled) { background: #16a34a; }
+    .btn-cancelar { background: #fee2e2; color: var(--rojo); }
+    .btn-cancelar:hover:not(:disabled) { background: #fca5a5; }
+    .btn-agendar:disabled, .btn-cancelar:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* Vacío / cargando */
+    .estado-lista { display: none; text-align: center; padding: 48px 20px; color: var(--texto-suave); }
+    .estado-lista.visible { display: block; }
+    .estado-lista .icono { font-size: 2.5rem; margin-bottom: 10px; }
+    .estado-lista p { font-size: 0.95rem; }
+    .spinner { display: inline-block; width: 32px; height: 32px; border: 3px solid var(--gris-borde); border-top-color: var(--azul); border-radius: 50%; animation: spin 0.7s linear infinite; margin-bottom: 10px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Panel Mis Turnos */
+    .mis-turnos-header { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+    .mis-turnos-header h2 { font-family: 'Libre Baskerville', serif; font-size: 1.3rem; }
+    .tabs-mis-turnos { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+    .tab-mt { padding: 6px 18px; border-radius: 20px; font-size: 0.82rem; font-weight: 600; cursor: pointer; border: 1px solid var(--gris-borde); background: var(--blanco); color: var(--texto-suave); transition: all 0.2s; font-family: 'Inter', sans-serif; }
+    .tab-mt.activo { background: var(--azul); color: #fff; border-color: var(--azul); }
+    .tab-mt:hover:not(.activo) { background: var(--fondo); }
+
+    /* ── LOGIN OVERLAY ─────────────────────────────── */
+    #login-overlay {
+      position: fixed; inset: 0; background: rgba(15,30,60,0.65);
+      z-index: 500; display: flex; align-items: center; justify-content: center;
+    }
+    .login-box {
+      background: var(--blanco); border-radius: 16px; padding: 36px 32px;
+      width: 340px; box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    .login-box h2 { font-family: 'Libre Baskerville', serif; font-size: 1.3rem; margin-bottom: 4px; color: var(--texto); }
+    .login-box p { font-size: 0.82rem; color: var(--texto-suave); margin-bottom: 22px; }
+    .login-campo { display: flex; flex-direction: column; gap: 5px; margin-bottom: 14px; }
+    .login-campo label { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--texto-suave); }
+    .login-campo input { padding: 9px 12px; border: 1px solid var(--gris-borde); border-radius: 8px; font-size: 0.9rem; font-family: 'Inter', sans-serif; background: var(--fondo); }
+    .login-campo input:focus { outline: none; border-color: var(--azul); box-shadow: 0 0 0 3px rgba(27,119,229,0.12); }
+    .btn-login { width: 100%; padding: 11px; background: var(--azul); color: #fff; border-radius: 8px; font-size: 0.92rem; font-weight: 700; cursor: pointer; font-family: 'Inter', sans-serif; transition: background 0.2s; margin-top: 4px; }
+    .btn-login:hover { background: var(--azul-oscuro); }
+    .login-error { font-size: 0.8rem; color: var(--rojo); min-height: 1.2em; margin-top: 8px; text-align: center; }
+    .login-demo { font-size: 0.72rem; color: var(--texto-suave); margin-top: 16px; background: var(--fondo); border-radius: 8px; padding: 8px 12px; line-height: 1.7; }
+
+    /* ── FOOTER ─────────────────────────────────────── */
+    footer { grid-area: footer; background: #0e0e0e; color: rgba(255,255,255,0.75); padding: 28px 40px 16px; }
+    .footer-redes { display: flex; gap: 60px; margin-bottom: 20px; flex-wrap: wrap; }
+    .lista-link-redes li { margin-bottom: 6px; font-size: 0.82rem; }
+    .lista-link-redes a { color: rgba(255,255,255,0.6); transition: color 0.2s; }
+    .lista-link-redes a:hover { color: #fff; }
+    .footer-legal { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #2a2a2a; padding-top: 12px; font-size: 0.75rem; flex-wrap: wrap; gap: 8px; }
+    .legal-link { color: rgba(255,255,255,0.5); margin-left: 14px; }
+    .legal-link:hover { color: #fff; }
+
+    /* ── TOAST ──────────────────────────────────────── */
+    #toast { position: fixed; bottom: 24px; right: 24px; padding: 12px 20px; border-radius: 10px; font-size: 0.88rem; font-weight: 600; color: #fff; box-shadow: 0 4px 16px rgba(0,0,0,0.2); opacity: 0; transform: translateY(10px); transition: opacity 0.3s, transform 0.3s; pointer-events: none; z-index: 999; }
+    #toast.visible { opacity: 1; transform: translateY(0); }
+    #toast.exito   { background: var(--verde); }
+    #toast.error   { background: var(--rojo); }
+    #toast.info    { background: var(--azul); }
+  </style>
+</head>
+<body>
+
+<!-- ═══ LOGIN OVERLAY ════════════════════════════════ -->
+<div id="login-overlay">
+  <div class="login-box">
+    <h2>Hospital Los Andes</h2>
+    <p>Iniciá sesión para ver y agendar turnos.</p>
+    <div class="login-campo">
+      <label for="login-email">Email</label>
+      <input type="email" id="login-email" placeholder="usuario@email.com" autocomplete="email">
+    </div>
+    <div class="login-campo">
+      <label for="login-pass">Contraseña</label>
+      <input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <button class="btn-login" id="btn-login">Iniciar sesión</button>
+    <p class="login-error" id="login-error"></p>
+    <div class="login-demo">
+      <strong>Demo:</strong><br>
+      Usuario: <code>ana@hospital.com</code> / <code>1234</code><br>
+      Admin:   <code>admin@hospital.com</code> / <code>1234</code>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ HEADER ═══════════════════════════════════════ -->
+<header>
+  <a id="logo" href="index.html">
+    <svg viewBox="0 0 96 96" fill="none" xmlns="http://www.w3.org/2000/svg" style="height:36px;width:36px">
+      <path d="M48 82s-34-22.4-34-44.8C14 24 24 16 34 16c6 0 11.2 2.8 14 7.2C50.8 18.8 56 16 62 16c10 0 20 8 20 21.2C82 59.6 48 82 48 82z" fill="#fff"/>
+      <rect x="40" y="36" width="16" height="5" rx="2.5" fill="#1b77e5"/>
+      <rect x="45.5" y="30.5" width="5" height="16" rx="2.5" fill="#1b77e5"/>
+    </svg>
+    <div id="logo-texto"><span>Hospital</span><span>Los Andes</span></div>
+  </a>
+
+  <nav>
+    <ul id="link-var">
+      <li><span class="link-a activo" id="nav-turnos" onclick="mostrarVista('turnos')">Turnos</span></li>
+      <li><span class="link-a" id="nav-mis-turnos" onclick="mostrarVista('mis-turnos')">Mis Turnos</span></li>
+      <li><a class="link-a" href="#">Consultas</a></li>
+    </ul>
+  </nav>
+
+  <div id="usuario-btn-contenedor">
+    <div id="contenedor-miniatura-usuario">
+      <svg viewBox="0 0 32 32" fill="white" xmlns="http://www.w3.org/2000/svg" style="width:22px;height:22px;filter:brightness(0) invert(1)">
+        <circle cx="16" cy="11" r="6"/>
+        <path d="M4 28c0-7 5-12 12-12s12 5 12 12" stroke="white" stroke-width="2" fill="none"/>
+      </svg>
+    </div>
+    <div class="dropdown-menu" id="menu">
+      <div class="dropdown-wrapper">
+        <div class="user-info">
+          <svg width="28" height="28" viewBox="0 0 32 32" fill="#1b77e5"><circle cx="16" cy="11" r="6"/><path d="M4 28c0-7 5-12 12-12s12 5 12 12" stroke="#1b77e5" stroke-width="2" fill="none"/></svg>
+          <div>
+            <h2 id="menu-nombre-usuario">Cargando…</h2>
+            <p id="menu-email-usuario"></p>
+          </div>
+        </div>
+        <hr>
+        <div class="menu-options" id="menu-admin-link"><a href="admin.html">🔐 Panel Admin</a></div>
+        <div class="menu-options"><a href="perfil.html">👤 Mi Perfil</a></div>
+        <div class="menu-options"><a href="#" id="btn-logout">🚪 Cerrar Sesión</a></div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ═══ ASIDE ════════════════════════════════════════ -->
+<aside>
+  <p class="aside-titulo">📅 Calendario</p>
+  <div class="calendario-wrapper">
+    <iframe
+      src="https://calendar.google.com/calendar/embed?src=es.ar%23holiday%40group.v.calendar.google.com&ctz=America%2FArgentina%2FBuenos_Aires&showTitle=0&showNav=1&showDate=1&showPrint=0&showTabs=0&showCalendars=0&showTz=0&mode=MONTH"
+      style="border:0" width="100%" height="100%" frameborder="0" scrolling="no" title="Calendario">
+    </iframe>
+  </div>
+  <p class="aside-nota">💡 <strong>Conectar tu calendario:</strong> En Google Calendar → Configuración → tu calendario → "Integrar calendario" → copiá el iframe y pegalo en el HTML.</p>
+</aside>
+
+<!-- ═══ MAIN ══════════════════════════════════════════ -->
+<main>
+
+  <!-- ── VISTA: Turnos disponibles ── -->
+  <div class="vista activa" id="vista-turnos">
+    <div class="filtros-card">
+      <h2>Buscar turnos disponibles</h2>
+      <div class="filtros-fila">
+        <div class="filtro-grupo">
+          <label for="filtro-especialidad">Especialidad</label>
+          <select id="filtro-especialidad">
+            <option value="">Todas</option>
+            <option value="Cardiología">Cardiología</option>
+            <option value="Pediatría">Pediatría</option>
+            <option value="Ginecología">Ginecología</option>
+            <option value="Clínica Médica">Clínica Médica</option>
+            <option value="Traumatología">Traumatología</option>
+            <option value="Neurología">Neurología</option>
+          </select>
+        </div>
+        <div class="filtro-grupo">
+          <label for="filtro-horario">Horario</label>
+          <select id="filtro-horario">
+            <option value="">Cualquiera</option>
+            <option value="mañana">Mañana (08:00–12:00)</option>
+            <option value="mediodia">Mediodía (12:00–15:00)</option>
+            <option value="tarde">Tarde (15:00–20:00)</option>
+          </select>
+        </div>
+        <div class="filtro-grupo">
+          <label for="filtro-fecha">Fecha</label>
+          <input type="date" id="filtro-fecha">
+        </div>
+        <button class="btn-buscar" onclick="filtrarTurnos()">Buscar</button>
+        <button class="btn-buscar" style="background:#64748b" onclick="limpiarFiltros()">Limpiar</button>
+      </div>
+    </div>
+
+    <div class="turnos-header">
+      <h2>Turnos disponibles</h2>
+      <span class="badge-count" id="badge-count">0</span>
+    </div>
+
+    <div class="estado-lista visible" id="cargando-turnos">
+      <div class="spinner"></div>
+      <p>Cargando turnos…</p>
+    </div>
+    <div class="estado-lista" id="turnos-vacio">
+      <div class="icono">🗓️</div>
+      <p>No se encontraron turnos con los filtros seleccionados.</p>
+    </div>
+    <div id="contenedor-turnos"></div>
+  </div>
+
+  <!-- ── VISTA: Mis Turnos ── -->
+  <div class="vista" id="vista-mis-turnos">
+    <div class="mis-turnos-header">
+      <h2>Mis Turnos</h2>
+      <span class="badge-count" id="badge-mis-count">0</span>
+    </div>
+
+    <div class="tabs-mis-turnos">
+      <button class="tab-mt activo" onclick="filtrarMisTurnos('todos', this)">Todos</button>
+      <button class="tab-mt" onclick="filtrarMisTurnos('confirmada', this)">✅ Confirmados</button>
+      <button class="tab-mt" onclick="filtrarMisTurnos('pendiente', this)">⏳ Pendientes</button>
+      <button class="tab-mt" onclick="filtrarMisTurnos('cancelado', this)">❌ Cancelados</button>
+    </div>
+
+    <div class="estado-lista visible" id="cargando-mis-turnos">
+      <div class="spinner"></div>
+      <p>Cargando tus turnos…</p>
+    </div>
+    <div class="estado-lista" id="mis-turnos-vacio">
+      <div class="icono">📋</div>
+      <p>No tenés turnos en esta categoría.</p>
+    </div>
+    <div id="contenedor-mis-turnos"></div>
+  </div>
+
+</main>
+
+<!-- ═══ FOOTER ════════════════════════════════════════ -->
+<footer>
+  <div class="footer-redes">
+    <ul class="lista-link-redes">
+      <li><span>Facebook: </span><a href="#">TurnosVirtuales</a></li>
+      <li><span>Instagram: </span><a href="#">TurnosVirtualesIG</a></li>
+    </ul>
+    <ul class="lista-link-redes">
+      <li><span>Email: </span><a href="#">contacto@hospitallosandes.com</a></li>
+      <li><span>WhatsApp: </span><a href="#">11-2344-3331</a></li>
+    </ul>
+  </div>
+  <div class="footer-legal">
+    <span>© 2026 Hospital Los Andes – Buenos Aires</span>
+    <div>
+      <a class="legal-link" href="#">Avisos Legales</a>
+      <a class="legal-link" href="#">Política de Privacidad</a>
+    </div>
+  </div>
+</footer>
+
+<div id="toast"></div>
+
+<!-- ═══ SCRIPT ════════════════════════════════════════ -->
+<script type="module">
+  import {
+    login, logout, getCurrentUser, isAdmin,
+    getTurnosDisponibles, getMisTurnos,
+    agendarTurno, cancelarTurno
+  } from './api.js';
+
+  // ── Estado local ──────────────────────────────────────
+  let turnosDisponibles = [];
+  let misTurnos = [];
+  let filtroMisTurnos = 'todos';
+
+  // ── Helpers de UI ─────────────────────────────────────
+  function toast(msg, tipo = 'info') {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className = `visible ${tipo}`;
+    setTimeout(() => { el.className = tipo; }, 2800);
+  }
+
+  function formatFecha(f) {
+    if (!f) return '';
+    const [a, m, d] = f.split('-');
+    return `${d}/${m}/${a}`;
+  }
+
+  function horarioBloque(hora) {
+    const h = parseInt(hora.split(':')[0]);
+    if (h < 12) return 'mañana';
+    if (h < 15) return 'mediodia';
+    return 'tarde';
+  }
+
+  const etiquetas = {
+    pendiente:  '⏳ Pendiente',
+    confirmada: '✅ Confirmado',
+    cancelado:  '❌ Cancelado'
+  };
+
+  // ── Vistas ────────────────────────────────────────────
+  window.mostrarVista = function(vista) {
+    document.querySelectorAll('.vista').forEach(v => v.classList.remove('activa'));
+    document.querySelectorAll('.link-a').forEach(l => l.classList.remove('activo'));
+    document.getElementById(`vista-${vista}`).classList.add('activa');
+    document.getElementById(`nav-${vista}`)?.classList.add('activo');
+    if (vista === 'mis-turnos') cargarMisTurnos();
+  };
+
+  // ── Login ─────────────────────────────────────────────
+  async function iniciarSesion() {
+    const email = document.getElementById('login-email').value.trim();
+    const pass  = document.getElementById('login-pass').value;
+    const errEl = document.getElementById('login-error');
+    errEl.textContent = '';
+    if (!email || !pass) { errEl.textContent = 'Completá todos los campos.'; return; }
+
+    document.getElementById('btn-login').disabled = true;
+    document.getElementById('btn-login').textContent = 'Ingresando…';
+    try {
+      await login(email, pass);
+      document.getElementById('login-overlay').style.display = 'none';
+      iniciarApp();
+    } catch (e) {
+      errEl.textContent = e.message;
+    } finally {
+      document.getElementById('btn-login').disabled = false;
+      document.getElementById('btn-login').textContent = 'Iniciar sesión';
+    }
+  }
+
+  document.getElementById('btn-login').addEventListener('click', iniciarSesion);
+  document.getElementById('login-pass').addEventListener('keydown', e => { if (e.key === 'Enter') iniciarSesion(); });
+
+  // ── Init app ──────────────────────────────────────────
+  function iniciarApp() {
+    const user = getCurrentUser();
+    if (!user) return;
+
+    // Header usuario
+    document.getElementById('menu-nombre-usuario').textContent = user.nombre;
+    document.getElementById('menu-email-usuario').textContent  = user.email;
+
+    // Mostrar enlace admin solo si es admin
+    if (isAdmin()) {
+      document.getElementById('menu-admin-link').style.display = 'block';
+    }
+
+    cargarTurnosDisponibles();
+  }
+
+  // Si ya hay sesión guardada, omitir login
+  if (getCurrentUser()) {
+    document.getElementById('login-overlay').style.display = 'none';
+    iniciarApp();
+  }
+
+  // ── Logout ────────────────────────────────────────────
+  document.getElementById('btn-logout').addEventListener('click', async e => {
+    e.preventDefault();
+    await logout();
+    location.reload();
+  });
+
+  // ── Dropdown usuario ──────────────────────────────────
+  document.getElementById('contenedor-miniatura-usuario').addEventListener('click', e => {
+    e.preventDefault(); e.stopPropagation();
+    document.getElementById('menu').classList.toggle('open-menu');
+  });
+  document.addEventListener('click', e => {
+    if (!document.getElementById('usuario-btn-contenedor').contains(e.target))
+      document.getElementById('menu').classList.remove('open-menu');
+  });
+
+  // ── Turnos disponibles ────────────────────────────────
+  async function cargarTurnosDisponibles() {
+    document.getElementById('cargando-turnos').classList.add('visible');
+    document.getElementById('contenedor-turnos').innerHTML = '';
+    document.getElementById('turnos-vacio').classList.remove('visible');
+    try {
+      turnosDisponibles = await getTurnosDisponibles();
+      renderTurnos(turnosDisponibles);
+    } catch (e) {
+      toast('Error al cargar turnos: ' + e.message, 'error');
+    } finally {
+      document.getElementById('cargando-turnos').classList.remove('visible');
+    }
+  }
+
+  function renderTurnos(lista) {
+    const cont  = document.getElementById('contenedor-turnos');
+    const vacio = document.getElementById('turnos-vacio');
+    document.getElementById('badge-count').textContent = lista.length;
+    if (lista.length === 0) { cont.innerHTML = ''; vacio.classList.add('visible'); return; }
+    vacio.classList.remove('visible');
+    cont.innerHTML = lista.map(t => `
+      <div class="turno-card ${t.estado}" id="card-${t.id}">
+        <div class="card-barra"></div>
+        <div class="card-body">
+          <p class="card-especialidad">${t.especialidad}</p>
+          <p class="card-medico">${t.profesional}</p>
+          <div class="card-datos">
+            <span class="card-dato"><span class="icon">📅</span> ${formatFecha(t.fecha)}</span>
+            <span class="card-dato"><span class="icon">🕐</span> ${t.hora} hs</span>
+          </div>
+          <span class="card-estado">${etiquetas[t.estado] || t.estado}</span>
+          <div class="card-acciones">
+            <button class="btn-agendar" onclick="window.agendar(${t.id})">Agendar</button>
+          </div>
+        </div>
+      </div>`).join('');
+  }
+
+  window.agendar = async function(id) {
+    try {
+      await agendarTurno(id);
+      toast('Turno agendado correctamente', 'exito');
+      cargarTurnosDisponibles();
+    } catch (e) {
+      toast(e.message, 'error');
+    }
+  };
+
+  // Filtros
+  window.filtrarTurnos = function() {
+    const esp    = document.getElementById('filtro-especialidad').value.toLowerCase();
+    const bloque = document.getElementById('filtro-horario').value;
+    const fecha  = document.getElementById('filtro-fecha').value;
+    const result = turnosDisponibles.filter(t => {
+      if (esp    && !t.especialidad.toLowerCase().includes(esp)) return false;
+      if (bloque && horarioBloque(t.hora) !== bloque)            return false;
+      if (fecha  && t.fecha !== fecha)                           return false;
+      return true;
+    });
+    renderTurnos(result);
+  };
+
+  window.limpiarFiltros = function() {
+    document.getElementById('filtro-especialidad').value = '';
+    document.getElementById('filtro-horario').value      = '';
+    document.getElementById('filtro-fecha').value        = '';
+    renderTurnos(turnosDisponibles);
+  };
+
+  // ── Mis Turnos ────────────────────────────────────────
+  async function cargarMisTurnos() {
+    document.getElementById('cargando-mis-turnos').classList.add('visible');
+    document.getElementById('contenedor-mis-turnos').innerHTML = '';
+    document.getElementById('mis-turnos-vacio').classList.remove('visible');
+    try {
+      misTurnos = await getMisTurnos();
+      renderMisTurnos();
+    } catch (e) {
+      toast('Error al cargar tus turnos: ' + e.message, 'error');
+    } finally {
+      document.getElementById('cargando-mis-turnos').classList.remove('visible');
+    }
+  }
+
+  function renderMisTurnos() {
+    const cont  = document.getElementById('contenedor-mis-turnos');
+    const vacio = document.getElementById('mis-turnos-vacio');
+
+    const lista = filtroMisTurnos === 'todos'
+      ? misTurnos
+      : misTurnos.filter(t => t.estado === filtroMisTurnos);
+
+    document.getElementById('badge-mis-count').textContent = lista.length;
+
+    if (lista.length === 0) { cont.innerHTML = ''; vacio.classList.add('visible'); return; }
+    vacio.classList.remove('visible');
+
+    cont.innerHTML = lista.map(t => {
+      const puedeCancelar = t.estado !== 'cancelado';
+      return `
+        <div class="turno-card ${t.estado}" id="mi-card-${t.id}">
+          <div class="card-barra"></div>
+          <div class="card-body">
+            <p class="card-especialidad">${t.especialidad}</p>
+            <p class="card-medico">${t.profesional}</p>
+            <div class="card-datos">
+              <span class="card-dato"><span class="icon">📅</span> ${formatFecha(t.fecha)}</span>
+              <span class="card-dato"><span class="icon">🕐</span> ${t.hora} hs</span>
+            </div>
+            <span class="card-estado">${etiquetas[t.estado] || t.estado}</span>
+            <div class="card-acciones">
+              <button class="btn-cancelar" ${puedeCancelar ? '' : 'disabled'}
+                onclick="window.cancelarMiTurno(${t.id})">Cancelar</button>
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  window.cancelarMiTurno = async function(id) {
+    if (!confirm('¿Confirmás la cancelación del turno?')) return;
+    try {
+      await cancelarTurno(id);
+      toast('Turno cancelado', 'error');
+      misTurnos = await getMisTurnos();
+      renderMisTurnos();
+    } catch (e) {
+      toast(e.message, 'error');
+    }
+  };
+
+  window.filtrarMisTurnos = function(estado, btn) {
+    filtroMisTurnos = estado;
+    document.querySelectorAll('.tab-mt').forEach(b => b.classList.remove('activo'));
+    btn.classList.add('activo');
+    renderMisTurnos();
+  };
+
+  // Recargar si cambios en otra pestaña
+  window.addEventListener('storage', () => {
+    if (document.getElementById('vista-turnos').classList.contains('activa'))
+      cargarTurnosDisponibles();
+    else
+      misTurnos.length && cargarMisTurnos();
+  });
+</script>
+</body>
+</html>

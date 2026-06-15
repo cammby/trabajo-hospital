@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hospital Los Andes – Mi Perfil</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --azul:        #1b77e5;
+      --azul-oscuro: #1256b0;
+      --azul-hover:  #18549c;
+      --fondo:       #f0f4fa;
+      --blanco:      #ffffff;
+      --gris-borde:  #d1dce8;
+      --texto:       #1a2333;
+      --texto-suave: #5a6a80;
+      --verde:       #22c55e;
+      --rojo:        #ef4444;
+      --radio:       12px;
+      --sombra:      0 2px 16px rgba(27,119,229,0.10);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; border: none; }
+    html { font-size: 15px; font-family: 'Inter', sans-serif; background: var(--fondo); color: var(--texto); }
+    a { text-decoration: none; color: inherit; }
+
+    /* ── HEADER ─────────────────────────────────────── */
+    header {
+      background: var(--azul); display: flex; align-items: center;
+      padding: 0 28px; height: 56px; gap: 16px;
+      position: sticky; top: 0; z-index: 100;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+    }
+    #logo { display: flex; align-items: center; gap: 8px; color: #fff; }
+    .logo-txt { font-family: 'Libre Baskerville', serif; }
+    .logo-txt span { display: block; font-size: 0.78rem; letter-spacing: 2px; color: rgba(255,255,255,0.9); }
+    .logo-txt span:first-child { font-size: 0.95rem; font-weight: 700; color: #fff; }
+    .header-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+    .header-link { color: rgba(255,255,255,0.8); font-size: 0.85rem; padding: 5px 12px; border-radius: 6px; transition: background 0.2s; }
+    .header-link:hover { background: var(--azul-hover); color: #fff; }
+
+    /* ── LAYOUT ─────────────────────────────────────── */
+    .page-wrap {
+      max-width: 800px; margin: 40px auto; padding: 0 20px 60px;
+      display: flex; flex-direction: column; gap: 24px;
+    }
+
+    /* ── HERO DE PERFIL ─────────────────────────────── */
+    .perfil-hero {
+      background: var(--blanco);
+      border: 1px solid var(--gris-borde);
+      border-radius: var(--radio);
+      box-shadow: var(--sombra);
+      padding: 32px 32px 28px;
+      display: flex; align-items: center; gap: 24px;
+    }
+    .avatar {
+      width: 80px; height: 80px; border-radius: 50%;
+      background: var(--azul); display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; font-size: 2rem; color: #fff; font-weight: 700;
+      font-family: 'Libre Baskerville', serif;
+      border: 3px solid rgba(27,119,229,0.2);
+    }
+    .perfil-info h1 { font-family: 'Libre Baskerville', serif; font-size: 1.4rem; margin-bottom: 4px; }
+    .perfil-info p  { font-size: 0.85rem; color: var(--texto-suave); }
+    .role-badge {
+      display: inline-block; margin-top: 8px;
+      padding: 2px 12px; border-radius: 20px; font-size: 0.72rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .role-badge.admin { background: #eff6ff; color: var(--azul); border: 1px solid #bfdbfe; }
+    .role-badge.user  { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+
+    /* ── CARD FORMULARIO ────────────────────────────── */
+    .card {
+      background: var(--blanco); border: 1px solid var(--gris-borde);
+      border-radius: var(--radio); box-shadow: var(--sombra); overflow: hidden;
+    }
+    .card-header {
+      padding: 16px 24px; border-bottom: 1px solid var(--gris-borde);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .card-header h2 { font-family: 'Libre Baskerville', serif; font-size: 1rem; color: var(--texto); }
+    .card-header p  { font-size: 0.78rem; color: var(--texto-suave); margin-top: 2px; }
+    .card-body { padding: 24px; }
+
+    /* Grid de campos */
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    .form-grupo { display: flex; flex-direction: column; gap: 5px; }
+    .form-grupo.full { grid-column: 1 / -1; }
+    .form-grupo label {
+      font-size: 0.76rem; font-weight: 600; color: var(--texto-suave);
+      text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .form-grupo input, .form-grupo select {
+      padding: 10px 14px; border: 1px solid var(--gris-borde);
+      border-radius: 8px; font-size: 0.9rem; font-family: 'Inter', sans-serif;
+      background: var(--fondo); color: var(--texto);
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .form-grupo input:focus, .form-grupo select:focus {
+      outline: none; border-color: var(--azul);
+      box-shadow: 0 0 0 3px rgba(27,119,229,0.12);
+    }
+    .form-grupo input:disabled {
+      background: #f8fafc; color: var(--texto-suave); cursor: not-allowed;
+    }
+    .form-grupo input.invalid { border-color: var(--rojo); }
+    .form-error { font-size: 0.75rem; color: var(--rojo); min-height: 1em; }
+
+    /* Divider dentro del form */
+    .form-section-title {
+      grid-column: 1 / -1;
+      font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 1px; color: var(--azul);
+      padding-bottom: 6px; border-bottom: 1px solid var(--gris-borde);
+      margin-top: 8px;
+    }
+
+    /* Acciones */
+    .form-acciones {
+      display: flex; gap: 12px; justify-content: flex-end;
+      padding: 16px 24px; border-top: 1px solid var(--gris-borde);
+      background: var(--fondo); border-radius: 0 0 var(--radio) var(--radio);
+    }
+    .btn-guardar {
+      padding: 10px 28px; background: var(--azul); color: #fff;
+      border-radius: 8px; font-size: 0.9rem; font-weight: 700;
+      cursor: pointer; font-family: 'Inter', sans-serif;
+      transition: background 0.2s, transform 0.1s;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .btn-guardar:hover:not(:disabled) { background: var(--azul-oscuro); }
+    .btn-guardar:active { transform: scale(0.98); }
+    .btn-guardar:disabled { opacity: 0.6; cursor: not-allowed; }
+    .btn-cancelar {
+      padding: 10px 22px; background: var(--blanco); color: var(--texto-suave);
+      border-radius: 8px; font-size: 0.9rem; font-weight: 600;
+      cursor: pointer; font-family: 'Inter', sans-serif;
+      border: 1px solid var(--gris-borde); transition: background 0.2s;
+    }
+    .btn-cancelar:hover { background: var(--fondo); }
+
+    /* ── CARD CONTRASEÑA ──────────────────────────────── */
+    .pass-campos { display: flex; flex-direction: column; gap: 14px; }
+    .pass-hint { font-size: 0.75rem; color: var(--texto-suave); margin-top: 4px; }
+    .pass-strength { height: 4px; border-radius: 2px; margin-top: 6px; background: var(--gris-borde); overflow: hidden; }
+    .pass-strength-bar { height: 100%; border-radius: 2px; width: 0; transition: width 0.3s, background 0.3s; }
+
+    /* ── CARGANDO ────────────────────────────────────── */
+    #cargando {
+      display: flex; align-items: center; justify-content: center;
+      min-height: 300px; gap: 12px; color: var(--texto-suave);
+    }
+    .spinner { width: 28px; height: 28px; border: 3px solid var(--gris-borde); border-top-color: var(--azul); border-radius: 50%; animation: spin 0.7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── TOAST ──────────────────────────────────────── */
+    #toast { position: fixed; bottom: 24px; right: 24px; padding: 12px 20px; border-radius: 10px; font-size: 0.88rem; font-weight: 600; color: #fff; box-shadow: 0 4px 16px rgba(0,0,0,0.2); opacity: 0; transform: translateY(10px); transition: opacity 0.3s, transform 0.3s; pointer-events: none; z-index: 999; }
+    #toast.visible { opacity: 1; transform: translateY(0); }
+    #toast.exito { background: var(--verde); }
+    #toast.error { background: var(--rojo); }
+    #toast.info  { background: var(--azul); }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      .form-grid { grid-template-columns: 1fr; }
+      .form-grupo.full { grid-column: 1; }
+      .perfil-hero { flex-direction: column; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── HEADER ─────────────────────────────────────────────────────────────── -->
+<header>
+  <a id="logo" href="index.html">
+    <svg viewBox="0 0 96 96" fill="none" xmlns="http://www.w3.org/2000/svg" style="height:34px;width:34px">
+      <path d="M48 82s-34-22.4-34-44.8C14 24 24 16 34 16c6 0 11.2 2.8 14 7.2C50.8 18.8 56 16 62 16c10 0 20 8 20 21.2C82 59.6 48 82 48 82z" fill="#fff"/>
+      <rect x="40" y="36" width="16" height="5" rx="2.5" fill="#1b77e5"/>
+      <rect x="45.5" y="30.5" width="5" height="16" rx="2.5" fill="#1b77e5"/>
+    </svg>
+    <div class="logo-txt"><span>Hospital</span><span>Los Andes</span></div>
+  </a>
+  <div class="header-right">
+    <a class="header-link" href="index.html">← Volver a Turnos</a>
+    <a class="header-link" href="#" id="btn-logout">Cerrar sesión</a>
+  </div>
+</header>
+
+<!-- ── CONTENIDO ─────────────────────────────────────────────────────────── -->
+<div class="page-wrap">
+
+  <!-- Cargando -->
+  <div id="cargando">
+    <div class="spinner"></div>
+    <span>Cargando perfil…</span>
+  </div>
+
+  <!-- Contenido real (oculto hasta cargar) -->
+  <div id="perfil-contenido" style="display:none; display:flex; flex-direction:column; gap:24px;">
+
+    <!-- Hero -->
+    <div class="perfil-hero">
+      <div class="avatar" id="avatar-iniciales">?</div>
+      <div class="perfil-info">
+        <h1 id="perfil-nombre-display">Cargando…</h1>
+        <p id="perfil-email-display"></p>
+        <span class="role-badge" id="perfil-role-badge"></span>
+      </div>
+    </div>
+
+    <!-- Card: Datos personales -->
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <h2>👤 Datos personales</h2>
+          <p>Información de tu cuenta. Los campos marcados con * son requeridos.</p>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="form-grid">
+
+          <div class="form-grupo">
+            <label for="inp-nombre">Nombre completo *</label>
+            <input type="text" id="inp-nombre" placeholder="Ej: María López" autocomplete="name">
+            <span class="form-error" id="err-nombre"></span>
+          </div>
+
+          <div class="form-grupo">
+            <label for="inp-email">Email *</label>
+            <input type="email" id="inp-email" placeholder="tu@email.com" autocomplete="email">
+            <span class="form-error" id="err-email"></span>
+          </div>
+
+          <div class="form-grupo">
+            <label for="inp-telefono">Teléfono</label>
+            <input type="tel" id="inp-telefono" placeholder="Ej: 11-2345-6789" autocomplete="tel">
+          </div>
+
+          <div class="form-grupo">
+            <label for="inp-dni">DNI</label>
+            <input type="text" id="inp-dni" placeholder="Ej: 30111222" inputmode="numeric">
+          </div>
+
+          <div class="form-grupo">
+            <label for="inp-fecha-nac">Fecha de nacimiento</label>
+            <input type="date" id="inp-fecha-nac">
+          </div>
+
+          <div class="form-grupo">
+            <label for="inp-sexo">Sexo biológico</label>
+            <select id="inp-sexo">
+              <option value="">Sin especificar</option>
+              <option value="M">Masculino</option>
+              <option value="F">Femenino</option>
+              <option value="X">No binario / Prefiero no decir</option>
+            </select>
+          </div>
+
+          <p class="form-section-title">Dirección</p>
+
+          <div class="form-grupo full">
+            <label for="inp-direccion">Calle y número</label>
+            <input type="text" id="inp-direccion" placeholder="Ej: Av. San Martín 1234, Piso 3 Dto B" autocomplete="street-address">
+          </div>
+
+          <div class="form-grupo">
+            <label for="inp-localidad">Localidad</label>
+            <input type="text" id="inp-localidad" placeholder="Ej: Lanús" autocomplete="address-level2">
+          </div>
+
+          <div class="form-grupo">
+            <label for="inp-provincia">Provincia</label>
+            <select id="inp-provincia">
+              <option value="">-- Seleccioná --</option>
+              <option>Buenos Aires</option><option>CABA</option><option>Córdoba</option>
+              <option>Santa Fe</option><option>Mendoza</option><option>Tucumán</option>
+              <option>Entre Ríos</option><option>Salta</option><option>Misiones</option>
+              <option>Chaco</option><option>Corrientes</option><option>Santiago del Estero</option>
+              <option>San Juan</option><option>Jujuy</option><option>Río Negro</option>
+              <option>Neuquén</option><option>Formosa</option><option>Chubut</option>
+              <option>San Luis</option><option>Catamarca</option><option>La Rioja</option>
+              <option>La Pampa</option><option>Santa Cruz</option><option>Tierra del Fuego</option>
+            </select>
+          </div>
+
+          <p class="form-section-title">Obra social / Cobertura médica</p>
+
+          <div class="form-grupo">
+            <label for="inp-obra-social">Obra social</label>
+            <input type="text" id="inp-obra-social" placeholder="Ej: OSDE, IOMA, Swiss Medical…">
+          </div>
+
+          <div class="form-grupo">
+            <label for="inp-nro-afiliado">Nº de afiliado</label>
+            <input type="text" id="inp-nro-afiliado" placeholder="Ej: 1234-56789-0">
+          </div>
+
+        </div>
+      </div>
+      <div class="form-acciones">
+        <button class="btn-cancelar" onclick="recargarPerfil()">Descartar cambios</button>
+        <button class="btn-guardar" id="btn-guardar-datos" onclick="guardarDatos()">
+          <span id="btn-guardar-texto">💾 Guardar cambios</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Card: Cambiar contraseña -->
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <h2>🔒 Cambiar contraseña</h2>
+          <p>Dejá los campos vacíos si no querés cambiarla.</p>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="pass-campos">
+          <div class="form-grupo">
+            <label for="inp-pass-actual">Contraseña actual</label>
+            <input type="password" id="inp-pass-actual" placeholder="Tu contraseña actual" autocomplete="current-password">
+          </div>
+          <div class="form-grupo">
+            <label for="inp-pass-nueva">Nueva contraseña</label>
+            <input type="password" id="inp-pass-nueva" placeholder="Mínimo 6 caracteres" autocomplete="new-password" oninput="actualizarFuerza(this.value)">
+            <div class="pass-strength"><div class="pass-strength-bar" id="pass-bar"></div></div>
+            <p class="pass-hint" id="pass-hint"></p>
+            <span class="form-error" id="err-pass"></span>
+          </div>
+          <div class="form-grupo">
+            <label for="inp-pass-confirmar">Confirmar nueva contraseña</label>
+            <input type="password" id="inp-pass-confirmar" placeholder="Repetí la nueva contraseña" autocomplete="new-password">
+          </div>
+        </div>
+      </div>
+      <div class="form-acciones">
+        <button class="btn-guardar" id="btn-guardar-pass" onclick="cambiarPassword()">
+          <span id="btn-pass-texto">🔑 Actualizar contraseña</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Card: Peligro -->
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <h2 style="color:var(--rojo)">⚠️ Zona de peligro</h2>
+          <p>Acciones irreversibles sobre tu cuenta.</p>
+        </div>
+      </div>
+      <div class="card-body" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+        <div>
+          <p style="font-weight:600; font-size:0.9rem;">Cerrar sesión en todos los dispositivos</p>
+          <p style="font-size:0.8rem; color:var(--texto-suave); margin-top:3px;">Cerrará tu sesión activa en todos los navegadores y dispositivos.</p>
+        </div>
+        <button onclick="cerrarSesionGlobal()" style="padding:9px 20px; background:#fef2f2; color:var(--rojo); border-radius:8px; font-size:0.85rem; font-weight:600; cursor:pointer; border:1px solid #fca5a5; font-family:'Inter',sans-serif; white-space:nowrap;">
+          Cerrar todas las sesiones
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<!-- ═══ SCRIPT ════════════════════════════════════════ -->
+<script type="module">
+  import { getCurrentUser, isAdmin, logout, getUserProfile, updateUserProfile } from './api.js';
+
+  // ── Guard ─────────────────────────────────────────────
+  const sesion = getCurrentUser();
+  if (!sesion) { location.href = 'index.html'; }
+
+  // ── Toast ─────────────────────────────────────────────
+  function toast(msg, tipo = 'info') {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className = `visible ${tipo}`;
+    setTimeout(() => { el.className = tipo; }, 2800);
+  }
+
+  // ── Logout ────────────────────────────────────────────
+  document.getElementById('btn-logout').addEventListener('click', async e => {
+    e.preventDefault();
+    await logout();
+    location.href = 'index.html';
+  });
+
+  // ── Cargar perfil ─────────────────────────────────────
+  let perfilActual = null;
+
+  async function cargarPerfil() {
+    document.getElementById('cargando').style.display = 'flex';
+    document.getElementById('perfil-contenido').style.display = 'none';
+    try {
+      perfilActual = await getUserProfile();
+      poblarFormulario(perfilActual);
+      document.getElementById('cargando').style.display = 'none';
+      document.getElementById('perfil-contenido').style.display = 'flex';
+    } catch (e) {
+      toast('Error al cargar el perfil: ' + e.message, 'error');
+    }
+  }
+
+  function iniciales(nombre) {
+    if (!nombre) return '?';
+    return nombre.split(' ').map(p => p[0]).join('').substring(0, 2).toUpperCase();
+  }
+
+  function poblarFormulario(u) {
+    // Hero
+    document.getElementById('avatar-iniciales').textContent      = iniciales(u.nombre);
+    document.getElementById('perfil-nombre-display').textContent = u.nombre || '—';
+    document.getElementById('perfil-email-display').textContent  = u.email  || '';
+    const badge = document.getElementById('perfil-role-badge');
+    badge.textContent  = isAdmin() ? '🔐 Administrador' : '👤 Usuario';
+    badge.className    = `role-badge ${isAdmin() ? 'admin' : 'user'}`;
+
+    // Campos
+    document.getElementById('inp-nombre').value        = u.nombre          || '';
+    document.getElementById('inp-email').value         = u.email           || '';
+    document.getElementById('inp-telefono').value      = u.telefono        || '';
+    document.getElementById('inp-dni').value           = u.dni             || '';
+    document.getElementById('inp-fecha-nac').value     = u.fechaNacimiento || '';
+    document.getElementById('inp-sexo').value          = u.sexo            || '';
+    document.getElementById('inp-direccion').value     = u.direccion       || '';
+    document.getElementById('inp-localidad').value     = u.localidad       || '';
+    document.getElementById('inp-provincia').value     = u.provincia       || '';
+    document.getElementById('inp-obra-social').value   = u.obraSocial      || '';
+    document.getElementById('inp-nro-afiliado').value  = u.nroAfiliado     || '';
+  }
+
+  // Exponer para el botón "Descartar"
+  window.recargarPerfil = cargarPerfil;
+
+  // ── Guardar datos personales ──────────────────────────
+  window.guardarDatos = async function() {
+    // Limpiar errores
+    ['inp-nombre','inp-email'].forEach(id => document.getElementById(id).classList.remove('invalid'));
+    ['err-nombre','err-email'].forEach(id => { document.getElementById(id).textContent = ''; });
+
+    const nombre = document.getElementById('inp-nombre').value.trim();
+    const email  = document.getElementById('inp-email').value.trim();
+    let ok = true;
+
+    if (!nombre) {
+      document.getElementById('inp-nombre').classList.add('invalid');
+      document.getElementById('err-nombre').textContent = 'El nombre es requerido.';
+      ok = false;
+    }
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      document.getElementById('inp-email').classList.add('invalid');
+      document.getElementById('err-email').textContent = 'Ingresá un email válido.';
+      ok = false;
+    }
+    if (!ok) return;
+
+    const btn  = document.getElementById('btn-guardar-datos');
+    const span = document.getElementById('btn-guardar-texto');
+    btn.disabled = true; span.textContent = 'Guardando…';
+
+    const datos = {
+      nombre,
+      email,
+      telefono:        document.getElementById('inp-telefono').value.trim()   || null,
+      dni:             document.getElementById('inp-dni').value.trim()         || null,
+      fechaNacimiento: document.getElementById('inp-fecha-nac').value          || null,
+      sexo:            document.getElementById('inp-sexo').value               || null,
+      direccion:       document.getElementById('inp-direccion').value.trim()   || null,
+      localidad:       document.getElementById('inp-localidad').value.trim()   || null,
+      provincia:       document.getElementById('inp-provincia').value          || null,
+      obraSocial:      document.getElementById('inp-obra-social').value.trim() || null,
+      nroAfiliado:     document.getElementById('inp-nro-afiliado').value.trim()|| null,
+    };
+
+    try {
+      perfilActual = await updateUserProfile(datos);
+      poblarFormulario(perfilActual);
+      toast('Perfil actualizado correctamente', 'exito');
+    } catch (e) {
+      toast('Error al guardar: ' + e.message, 'error');
+    } finally {
+      btn.disabled = false; span.textContent = '💾 Guardar cambios';
+    }
+  };
+
+  // ── Cambiar contraseña ────────────────────────────────
+  window.actualizarFuerza = function(val) {
+    const bar  = document.getElementById('pass-bar');
+    const hint = document.getElementById('pass-hint');
+    if (!val) { bar.style.width = '0'; hint.textContent = ''; return; }
+    let score = 0;
+    if (val.length >= 6)  score++;
+    if (val.length >= 10) score++;
+    if (/[A-Z]/.test(val)) score++;
+    if (/[0-9]/.test(val)) score++;
+    if (/[^A-Za-z0-9]/.test(val)) score++;
+    const niveles = [
+      { width: '20%', color: '#ef4444', label: 'Muy débil' },
+      { width: '40%', color: '#f97316', label: 'Débil' },
+      { width: '60%', color: '#f59e0b', label: 'Regular' },
+      { width: '80%', color: '#22c55e', label: 'Buena' },
+      { width: '100%',color: '#16a34a', label: 'Muy segura' },
+    ];
+    const n = niveles[Math.min(score - 1, 4)] || niveles[0];
+    bar.style.width      = n.width;
+    bar.style.background = n.color;
+    hint.textContent     = n.label;
+    hint.style.color     = n.color;
+  };
+
+  window.cambiarPassword = async function() {
+    document.getElementById('err-pass').textContent = '';
+    const actual    = document.getElementById('inp-pass-actual').value;
+    const nueva     = document.getElementById('inp-pass-nueva').value;
+    const confirmar = document.getElementById('inp-pass-confirmar').value;
+
+    if (!actual || !nueva || !confirmar) {
+      document.getElementById('err-pass').textContent = 'Completá todos los campos de contraseña.'; return;
+    }
+    if (nueva.length < 6) {
+      document.getElementById('err-pass').textContent = 'La nueva contraseña debe tener al menos 6 caracteres.'; return;
+    }
+    if (nueva !== confirmar) {
+      document.getElementById('err-pass').textContent = 'Las contraseñas no coinciden.'; return;
+    }
+
+    const btn  = document.getElementById('btn-guardar-pass');
+    const span = document.getElementById('btn-pass-texto');
+    btn.disabled = true; span.textContent = 'Actualizando…';
+
+    try {
+      // En la API real: await updatePassword({ actual, nueva });
+      await new Promise(r => setTimeout(r, 600)); // [MOCK]
+      document.getElementById('inp-pass-actual').value    = '';
+      document.getElementById('inp-pass-nueva').value     = '';
+      document.getElementById('inp-pass-confirmar').value = '';
+      window.actualizarFuerza('');
+      toast('Contraseña actualizada correctamente', 'exito');
+    } catch (e) {
+      toast('Error al cambiar contraseña: ' + e.message, 'error');
+    } finally {
+      btn.disabled = false; span.textContent = '🔑 Actualizar contraseña';
+    }
+  };
+
+  // ── Cerrar todas las sesiones ─────────────────────────
+  window.cerrarSesionGlobal = async function() {
+    if (!confirm('¿Cerrar sesión en todos los dispositivos?')) return;
+    await logout();
+    // En el backend real enviarías una petición para invalidar todos los tokens del usuario
+    location.href = 'index.html';
+  };
+
+  // ── Init ──────────────────────────────────────────────
+  cargarPerfil();
+</script>
+</body>
+</html>
