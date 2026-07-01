@@ -353,7 +353,25 @@ class Clinica:
         ]
         cursor.close()
         return resultado
-      
+    def registrar_medicos_admin(self, m):
+        cursor = self.conn.cursor()
+        try:
+            cursor.execute("SELECT id FROM Medicos WHERE email = ?", (m.email,))
+            if cursor.execute():
+                return False
+            cursor.execute(''' INSERT INTO Medicos(id, nombre, apellido, dni ,genero, fecha_nacimiento, nacionalidad,
+                            telefono, domicilio, email, password, nivel_acceso, especialidad)
+                           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+                           (m.id_usuario, m.nombre, m.apellido, m.dni, m.genero, m.fecha_nacimiento,
+                            m.nacionalidad, m.telefono, m.domicilio, m.email, hash_password(m.password),"Medico", m.especialidad))
+            self.conn.commit()
+            return True
+        except sqlite3.Error as e:
+            print(f"Error al registrar medico: {e}")
+            return False
+        finally:
+            cursor.close()
+    
     # --- Logica de turnos ---
 
     def listar_todos_los_turnos_admin(self):
@@ -370,6 +388,35 @@ class Clinica:
         cursor.close()
         return resultado
     
+     def modificar_medicos_admin(self, id_medico, datos):
+        cursor = self.conn.cursor()
+        try:
+            camps = ",".join([f"{k} = ?" for k in datos.keys()])
+            valores = list(datos.values())
+            valores.append(id_medico)
+
+            cursor.execute(f" UPDATE Medicos SET {camps} WHERE id = ?", valores)
+            self.conn.commit()
+            return cursor.rowcount > 0
+        except sqlite3.Error as e:
+            print(f"Error al modificar medico: {e}")
+            return False
+        finally:
+            cursor.close()
+
+    
+    def eliminar_medicos_admin(self, id_medico):
+        cursor = self.conn.cursor()
+        try:
+            cursor.execute("DELETE FROM Medicos WHERE id = ?", (id_medico,))
+            self.conn.commit()
+            return cursor.rowcount > 0
+        except sqlite3.Error as e:
+            print(f"Error al eliminar medico: {e}")
+            return False
+        finally:
+            cursor.close()    
+
     def buscar_turnos_por_socio(self, socio_id):
         cursor = self.conn.cursor()
         query = '''
@@ -600,6 +647,33 @@ class TurnoIn(BaseModel):
     medico_id: str
     fecha_hora: str
 
+class AdminMedicoIn(BaseModel):
+    nombre: str
+    apellido: str
+    dni: str
+    especialidad: str
+    email: str
+    password: str
+    genero: Optional[str] = None
+    fecha_nacimiento: Optional[str] = None
+    nacionalidad: Optional[str] = None
+    telefono: Optional[str] = None
+    domicilio: Optional[str] = None
+
+class AdminMedicoUpdateIn(BaseModel):
+    nombre: Optional[str] = None
+    apellido: Optional[str] = None
+    especialidad: Optional[str] = None
+    telefono: Optional[str] = None
+    domicilio: Optional[str] = None
+    email: Optional[str] = None
+
+class AdminSocioUpdateIn(BaseModel):
+    nombre: Optional[str] = None
+    apellido: Optional[str] = None
+    telefono: Optional[str] = None
+    domicilio: Optional[str] = None
+    codigo_postal: Optional[str] = None
 
 # --- ENDPOINTS ---
 
@@ -680,6 +754,61 @@ def api_cancelar_turno(id_turno: str):
         raise HTTPException(status_code=404, detail="El turno no existe")
     return {"status": "success", "mensaje": "Turno cancelado con éxito"}
 
+# ================== ENDPOINS EXCLUSIVOS PARA ADMINISTRADORES ==================
+@app.get("/api/admin/pacientes")
+def admin_listar_pacientes():
+    return mi_clinica.listar_todos_los_socios()
+
+
+@app.get("/api/admin/medicos")
+def admin_modificar_paciente(id_paciente: str, datos: AdminSocioUpdateIn):
+    datos_dict = {k: v for k, v in datos.model_dump().items() if v is not None}
+    if not datos_dict:
+        raise HTTPException(status_code=400, detail="No se enviaron campos para modificar")
+    
+    if not mi_clinica.modificar_socio_admin(id_paciente, datos_dict):
+        raise HTTPException(status_code=404, detail = "Paciente no encontrado o error al modificar")
+    return {"status": "success", "mensaje": "Paciente modificado con exito"}
+
+@app.delete("/api/admin/pacientes/{id_paciente}")
+def admin_eliminar_paciente(id_paciente: str):
+    if not mi_clinica.eliminar_socio_admin(id_paciente):
+        raise HTTPException(status_code=404, detail="Paciente no existe")
+    return {"status": "success", "mensaje": "Paciente eliminado con exito"}
+
+
+@app.get("/api/admin/turnos")
+def admin_listar_turnos():
+    return mi_clinica.listar_todos_los_turnos_admin()
+
+@app.post("/api/admin/medicos")
+def admin_registrar_medico(medico: AdminMedicoIn):
+    nuevo_medico= Medico(
+        nombre = medico.nombre, apellido = medico.apellido, dni = medico.dni,
+        especialidad = medico.especialidad, email = medico.email, password = medico.password,
+        genero = medico.genero, fecha_nacimiento = medico.fecha_nacimiento, nacionalidad = medico.nacionalidad,
+        telefono = medico.telofono, domicilio = medico.domicilio,
+    )
+    if not mi_clinica.registrar_medicos_admin(nuevo_medico):
+        raise HTTPException(status_code=400, detail="El DNI o Email del medico ya se encuentra registrado.")
+    return {"status": "success", "mensaje": "Medico registrado con exito"}
+
+@app.put("/api/admin/medicos/{id_medicos}")
+def admin_modificar_medicos(id_medicos: str, datos: AdminMedicoUpdateIn):
+    datos_dict = {k: v for k, v in datos.model_dump().items() if v is not None}
+    if not datos_dict:
+        raise HTTPException(status_code=400, detail="No se enviaron campos para modificar")
+    return {"status": "success", "mensaje": "Medico modificado con exito"}
+
+@app.delete("/api/admin/medicos")
+def admin_eliminar_medico(id_medico: str):
+    if not mi_clinica.eliminar_medicos_admin(id_medico):
+        raise HTTPException(status_code=404, detail= "Medico no existe")
+    return {"status": "success", "mensaje": "Medico eliminado con exito"}
+
+@app.get("/api/admin/estadisticas")
+def admin_obetener_estadisticas():
+    return mi_clinica.obtener_estadisticas_sistema()
 
 # ==================== SERVIR FRONTEND ====================
 
