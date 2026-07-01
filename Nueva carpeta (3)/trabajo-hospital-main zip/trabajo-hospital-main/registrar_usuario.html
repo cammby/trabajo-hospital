@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Usuario</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: hsl(0, 1%, 49%);
+            padding: 20px;
+        }
+
+        .contenedor {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.2);
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 25px;
+            color: #333;
+        }
+
+        .campo {
+            width: 100%;
+            height: 45px;
+            margin-bottom: 15px;
+            padding-left: 12px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 16px;
+        }
+
+        .campo:focus {
+            outline: none;
+            border-color: #4a90e2;
+            box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #444;
+            font-size: 14px;
+        }
+
+        .required::after {
+            content: " *";
+            color: red;
+        }
+
+        .password-container {
+            position: relative;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #666;
+            font-size: 18px;
+        }
+
+        .error {
+            color: #e74c3c;
+            font-size: 14px;
+            margin-top: -10px;
+            margin-bottom: 12px;
+            display: none;
+        }
+
+        .boton {
+            width: 100%;
+            height: 48px;
+            border: none;
+            background-color: #4a90e2;
+            color: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        .boton:hover {
+            background-color: #357abd;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="contenedor">
+        <h2>Registro de Usuario</h2>
+
+        <form id="registroForm">
+
+            <label class="required">Nombre/s</label>
+            <input type="text" id="nombre" class="campo" required>
+
+            <label class="required">Apellido</label>
+            <input type="text" id="apellido" class="campo" required>
+
+            <label class="required">Nacionalidad</label>
+            <input type="text" id="nacionalidad" class="campo" required>
+
+            <label class="required">Número de Teléfono</label>
+            <input type="tel" id="telefono" class="campo" required>
+
+            <label class="required">Domicilio</label>
+            <input type="text" id="domicilio" class="campo" required>
+
+            <label class="required">DNI (8 dígitos)</label>
+            <input type="text" id="dni" maxlength="8" class="campo" required>
+
+            <label class="required" >Email</label>
+            <input type="email" id="email" class="campo" placeholder="mariano@gmail.com" required>
+
+            <label class="required">Contraseña</label>
+            <div class="password-container">
+                <input type="password" id="password" class="campo" required>
+                <span class="toggle-password" id="togglePass">👁️</span>
+            </div>
+
+            <label class="required">Vuelva a ingresar su contraseña</label>
+            <div class="password-container">
+                <input type="password" id="confirmPassword" class="campo" required>
+                <span class="toggle-password" id="toggleConfirm">👁️</span>
+            </div>
+
+            <div id="errorGeneral" class="error"></div>
+
+            <button type="submit" class="boton" onclick="validarCorreo(form.email.value)">Registrarse</button>
+        </form>
+    </div>
+
+    <script>
+        function validarCorreo(correo) {
+            var expReg= /^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/;
+            var esValido= expReg.test(correo);
+            if (esValido==true){
+                alert("el correo ingresado es valido");
+            }
+            else{
+                alert("correo no es valido")
+            }
+            }
+
+        function togglePassword(inputId, toggleId) {
+            const passwordInput = document.getElementById(inputId);
+            const toggle = document.getElementById(toggleId);
+            
+            toggle.addEventListener('click', () => {
+                if (passwordInput.type === 'password') {
+                    passwordInput.type = 'text';
+                    toggle.textContent = '🙈';
+                } else {
+                    passwordInput.type = 'password';
+                    toggle.textContent = '👁️';
+                }
+            });
+        }
+
+        togglePassword('password', 'togglePass');
+        togglePassword('confirmPassword', 'toggleConfirm');
+
+        const form = document.getElementById('registroForm');
+        const errorGeneral = document.getElementById('errorGeneral');
+
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            errorGeneral.style.display = 'none';
+            errorGeneral.textContent = '';
+
+            let isValid = true;
+
+            const requiredFields = ['nombre', 'apellido', 'nacionalidad', 'telefono', 'domicilio', 'dni', 'email', 'password', 'confirmPassword'];
+            
+            for (let fieldId of requiredFields) {
+                const field = document.getElementById(fieldId);
+                if (!field.value.trim()) {
+                    isValid = false;
+                    field.style.borderColor = '#e74c3c';
+                } else {
+                    field.style.borderColor = '#4a90e2';
+                }
+            }
+
+            const dni = document.getElementById('dni').value.trim();
+            if (!/^\d{8}$/.test(dni)) {
+                isValid = false;
+                document.getElementById('dni').style.borderColor = '#e74c3c';
+                alert('El DNI debe contener exactamente 8 números.');
+            }
+
+            const password = document.getElementById('password').value;
+            if (password.length < 8 || !/\d/.test(password)) {
+                isValid = false;
+                document.getElementById('password').style.borderColor = '#e74c3c';
+                alert('La contraseña debe tener mínimo 8 caracteres e incluir al menos un número.');
+            }
+
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            if (password !== confirmPassword) {
+                isValid = false;
+                document.getElementById('confirmPassword').style.borderColor = '#e74c3c';
+                alert('Las contraseñas no coinciden.');
+            }
+
+            if (!isValid) {
+                errorGeneral.textContent = 'Por favor complete todos los campos obligatorios correctamente.';
+                errorGeneral.style.display = 'block';
+                return;
+            }
+
+            const datos = {
+    nombre: document.getElementById("nombre").value.trim(),
+    apellido: document.getElementById("apellido").value.trim(),
+    dni: document.getElementById("dni").value.trim(),
+    nacionalidad: document.getElementById("nacionalidad").value.trim(),
+    telefono: document.getElementById("telefono").value.trim(),
+    domicilio: document.getElementById("domicilio").value.trim(),
+    email: document.getElementById("email").value.trim(),
+    password: document.getElementById("password").value
+};
+
+fetch("http://127.0.0.1:8000/api/registrar", {
+    method: "POST",
+    headers: {
+        "Content-Type": "application/json"
+    },
+    body: JSON.stringify(datos)
+})
+.then(async (response) => {
+
+    const resultado = await response.json();
+
+    if(response.ok){
+    alert(resultado.mensaje);
+    window.location.href = "/";
+    }else{
+        errorGeneral.textContent = resultado.detail;
+        errorGeneral.style.display = "block";
+    }
+
+})
+.catch(error => {
+    console.error(error);
+    errorGeneral.textContent = "No se pudo conectar con el servidor.";
+    errorGeneral.style.display = "block";
+});
+        });
+
+        const inputs = document.querySelectorAll('.campo');
+        inputs.forEach(input => {
+            input.addEventListener('input', () => {
+                input.style.borderColor = '#ccc';
+            });
+        });
+    </script>
+
+</body>
+</html>

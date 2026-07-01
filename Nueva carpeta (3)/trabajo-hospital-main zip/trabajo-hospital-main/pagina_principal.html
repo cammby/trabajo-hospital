@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hospital San Lucas - Turnos</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+  <style>
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+    }
+    .banner {
+      background: linear-gradient(135deg, #0ea5e9 0%, #0284c8 100%);
+    }
+  </style>
+</head>
+<body class="bg-gray-50">
+  <div class="flex h-screen">
+    <!-- Sidebar -->
+    <div class="w-72 bg-white border-r flex flex-col">
+      <div class="banner p-6 text-white flex items-center gap-4">
+        <i class="fa-solid fa-hospital text-3xl"></i>
+        <div>
+          <h1 class="text-2xl font-bold">San Lucas</h1>
+          <p class="text-sky-100 text-sm">Hospital</p>
+        </div>
+      </div>
+
+      <div class="p-6 border-b">
+        <div class="flex items-center gap-3">
+          <div id="avatar" class="w-11 h-11 bg-sky-100 rounded-full flex items-center justify-center text-xl font-bold text-sky-700"></div>
+          <div>
+            <p id="sidebar-name" class="font-semibold">Cargando...</p>
+            <p id="sidebar-dni" class="text-xs text-gray-500"></p>
+          </div>
+        </div>
+      </div>
+
+      <nav class="flex-1 p-4 space-y-1">
+        <button onclick="showSection('available')" class="nav-btn w-full text-left px-4 py-3 rounded-2xl hover:bg-sky-50 active-nav flex items-center gap-3" id="nav-available">
+          <i class="fa-solid fa-calendar-days"></i> Turnos Disponibles
+        </button>
+        <button onclick="showSection('scheduled')" class="nav-btn w-full text-left px-4 py-3 rounded-2xl hover:bg-sky-50 flex items-center gap-3" id="nav-scheduled">
+          <i class="fa-solid fa-clock"></i> Mis Turnos
+        </button>
+      </nav>
+
+      <div class="p-6 border-t">
+        <button onclick="logout()" class="w-full py-3 text-red-600 hover:bg-red-50 rounded-2xl flex items-center justify-center gap-2">
+          <i class="fa-solid fa-right-from-bracket"></i> Cerrar Sesión
+        </button>
+      </div>
+    </div>
+
+    <!-- Contenido Principal -->
+    <div class="flex-1 overflow-auto">
+      <div class="bg-white border-b px-8 py-5">
+        <h2 id="section-title" class="text-2xl font-semibold">Turnos Disponibles</h2>
+      </div>
+
+      <div id="section-available" class="section p-8">
+        <div id="available-list" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+      </div>
+
+      <div id="section-scheduled" class="section hidden p-8">
+        <div id="scheduled-list" class="space-y-4"></div>
+      </div>
+
+      <div id="section-profile" class="section hidden p-8 max-w-2xl">
+        <form id="profile-form" onsubmit="saveProfile(event)" class="space-y-6">
+          <!-- ... campos de perfil ... -->
+          <button type="submit" class="bg-sky-600 text-white px-8 py-4 rounded-2xl">Guardar Cambios</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = "http://127.0.0.1:8000";
+    let userId = null;
+
+    async function apiFetch(endpoint, options = {}) {
+      const res = await fetch(API_BASE + endpoint, {
+        headers: { "Content-Type": "application/json" },
+        ...options
+      });
+      if (!res.ok) throw new Error((await res.json()).detail || "Error");
+      return res.json();
+    }
+
+    async function loadUser(id) {
+      userId = id;
+      const data = await apiFetch(`/api/usuario/perfil/${id}`);
+      document.getElementById('sidebar-name').textContent = `${data.nombre} ${data.apellido}`;
+      document.getElementById('sidebar-dni').textContent = `DNI: ${data.dni}`;
+      document.getElementById('avatar').textContent = data.nombre[0];
+    }
+
+    async function loadAvailable() {
+      const data = await apiFetch('/api/medicos');
+      const container = document.getElementById('available-list');
+      container.innerHTML = '';
+      data.forEach(m => {
+        const div = document.createElement('div');
+        div.className = "bg-white p-6 rounded-3xl border hover:shadow-lg";
+        div.innerHTML = `
+          <h3 class="font-semibold">${m.nombre}</h3>
+          <p class="text-sky-600">${m.especialidad}</p>
+          <button onclick="bookTurno(${m.id})" class="mt-4 w-full bg-sky-600 text-white py-3 rounded-2xl">Agendar Turno</button>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    async function bookTurno(medico_id) {
+      const fecha = prompt("Fecha (YYYY-MM-DD):", "2026-07-01");
+      const hora = prompt("Hora (HH:MM):", "09:00");
+      if (!fecha || !hora) return;
+      try {
+        await apiFetch('/api/turnos', {
+          method: 'POST',
+          body: JSON.stringify({
+            socio_id: userId,
+            medico_id: medico_id,
+            fecha_hora: `${fecha} ${hora}`
+          })
+        });
+        alert("Turno agendado correctamente");
+        loadMyTurnos();
+        showSection('scheduled');
+      } catch (e) {
+        alert(e.message);
+      }
+    }
+
+    async function loadMyTurnos() {
+      const data = await apiFetch(`/api/usuario/turnos/${userId}`);
+      const container = document.getElementById('scheduled-list');
+      container.innerHTML = '';
+      data.forEach(t => {
+        const div = document.createElement('div');
+        div.className = "bg-white p-6 rounded-3xl border hover:shadow-lg";
+        div.innerHTML = `
+          <h3 class="font-semibold">${t.medico}</h3>
+          <p class="text-sky-600">${t.especialidad}</p>
+          <p class="text-gray-500">${t.fecha_hora}</p>
+          <button onclick="cancelTurno(${t.id_turno})" class="mt-4 w-full bg-red-600 text-white py-3 rounded-2xl">Cancelar Turno</button>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    // ==================== NUEVA FUNCIÓN CON CONFIRMACIÓN ====================
+    async function cancelTurno(turnoId) {
+      if (!confirm("¿Estás seguro de que deseas cancelar este turno?")) {
+        return; // El usuario eligió "No"
+      }
+
+      try {
+        await apiFetch(`/api/turnos/${turnoId}`, {
+          method: 'DELETE'
+        });
+        alert("Turno cancelado correctamente. Ahora está disponible nuevamente.");
+        loadMyTurnos(); // Refresca la lista de mis turnos
+      } catch (e) {
+        alert("Error al cancelar el turno: " + e.message);
+      }
+    }
+    // =====================================================================
+
+    function showSection(section) {
+      document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
+      document.getElementById(`section-${section}`).classList.remove('hidden');
+    }
+
+    function logout() {
+      localStorage.removeItem('userId');
+      window.location.href = "/";
+    }
+
+    window.onload = () => {
+      const id = localStorage.getItem('userId');
+      if (!id) {
+        window.location.href = "/";
+        return;
+      }
+      loadUser(id);
+      loadAvailable();
+      showSection('available');
+    };
+  </script>
+</body>
+</html>
+
