@@ -144,6 +144,20 @@ class Clinica:
                        FOREIGN KEY (socio_id) REFERENCES Socios(id),
                        FOREIGN KEY (medico_id) REFERENCES Medicos(id)
                                                                         )''')
+
+         
+        cursor.execute('''
+                       CREATE TABLE IF NOT EXISTS HistorialClinico(
+                       id TEXT PRIMARY KEY,
+                       socio_id TEXT NOT NULL,
+                       medico_id TEXT NOT NULL,
+                       fecha_hora TEXT NOT NULL,
+                       diagnostico TEXT NOT NULL,
+                       observaciones TEXT,
+                       FOREIGN KEY (socio_id) REFERENCES Socios(id),
+                       FOREIGN KER (medicos_id) REFERENCES Medicos(id) 
+                       )''')
+
         self.conn.commit()
         cursor.close()
 
@@ -371,6 +385,47 @@ class Clinica:
             return False
         finally:
             cursor.close()
+    def agregar_entrada_historial(self, socio_id: str, medico_id: str, diagnostico: str, tratamiento: str, observciones: str):
+        cursor = self.conn.cursor()
+        try:
+            id_historial = str(uuid.uuid4())
+            fecha_actual = datetime.now(.strftime("%Y-%m-%d  %H:%M:%S"))
+
+            cursor.execute('''
+                           INSERT INTO Hsitorialclinico (id, socio_id, medico_id, fecha_hora, diagnostico, tratamiento, observaciones)
+                           VALUES (?, ?, ?, ?, ?, ?, ?,)
+                           ''', (id_historial, socio_id, medico_id, fecha_actual, diagnostico, tratamiento,observciones)
+                           )
+            self.conn.commit()
+            return True
+        except sqlite3.Error as e:
+            print(f"Error al guardar historial clinico: {e}")
+            return False
+        finally:
+            cursor.close()
+
+
+    def obtener_historial_completo_paciente(self, socio_id: str):
+        cursor = self.conn.cursor()
+        query = '''
+                SELEC H.fecha_hora, H.diagnostico, H.tratamiento, H.observaciones, M.nombre, M.apellido, M.especialidad
+                FROM HistorialClinico H
+                INNER JOIN Medicos M ON H.medicos_id = M.id
+                WHERE H.socio_id = ?
+                ORDER BY H.fecha_hora DESC 
+                '''
+        cursor.execute(query, (socio_id,))
+        resultado = [
+            {
+                "fecha_hora" : r[0],
+                "diagnostico" : r[1],
+                "tratamiento" : r[2],
+                "observaciones" : r[3],
+                "medico" : f"{r[4]} {r[5]} {r[6]}"
+            } for r in cursor.fetchall()
+        ]
+        cursor.close()
+        return resultado
     
     # --- Logica de turnos ---
 
@@ -727,6 +782,13 @@ class AdminSocioUpdateIn(BaseModel):
 class CambiarEstadoTurnoIn(BaseModel):
     estado: str
 
+class HistorialClinicoIn(BaseModel):
+    socio_id: str
+    medico_id: str
+    diagnostico: str
+    tratamiento: Optional[str] = None
+    observaciones: Optional[str] = None
+
 # --- ENDPOINTS ---
 
 @app.post("/api/inicio_sesion")
@@ -873,6 +935,30 @@ def recepcion_cambiar_estado(id_turno: str, datos: CambiarEstadoTurnoIn):
         raise HTTPException(status_code=404, details= "Turno no encontado")
     return {"status": "success", "mensaje": "estado del turno actualizado con exito"} 
 
+# ========= ENDPOINST EXCLUSIVOS PARA MEDICOS ========
+
+@app.get("/api/medico/{medico_id}/turnos")
+def api_medico_agenda(medico_id: str, fecha: Optional[str] = None):
+    if not fecha:
+        fecha = datetime.now().strftime("%Y-%m-%d")
+    return mi_clinica.listar_turnos_del_dia_medico(medico_id, fecha)
+
+@app.get("/ape/medicos/paciente/{socio_id}/historal")
+def api_medicor_ver_historial(socio_id: str):
+    return mi_clinica.obtener_historial_completo_paciente(socio_id)
+
+@app.post("/api/medico/historial")
+def api_medico_guardar_consulta(datos: HistorialClinicoIn):
+    exito = mi_clinica.agregar_entrada_historial(
+        socio_id = datos.socio_id,
+        medico_id = datos.medico_id,
+        diagnostico = datos.diagnostico,
+        tratamiento = datos.tratamiento,
+        observciones = datos.observaciones
+    )
+    if not exito:
+        raise HTTPException(status_code=500, detail="No se pudo registrar la consulta en el historial.")
+    return{"status": "success", "mensaje": "Consulta guardada con exito en el historial"}
 
 # ==================== SERVIR FRONTEND ====================
 
