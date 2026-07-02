@@ -594,7 +594,56 @@ class Clinica:
             print(f"Error al cancelar turno: {e}")
             return False
         finally:
-            cursor.close()      
+            cursor.close() 
+
+    def listar_turnos_para_recepcion(self, fecha: Optional[str] = None):
+        cursor = self.conn.cursor()
+        try:
+            if fecha:
+                query = '''
+                        SELECT T.id, T.especialidad, T.profesional, T.fecha_hora, T.estado, S.nombre, S.apellido
+                        FROM Turnos T
+                        LEFT JOIN Socios S On T.socios_id = S.id
+                        WHERE T.fecha_hora LIKE ?
+                        ORDER BY T.fecha_hora ASC                                                   
+                        '''
+                cursor.execute(query, (f"{fecha}%",))
+            else:
+                query = '''
+                        SELECT T.id, T.especialidad, T.profesional, T.fecha_hora, T.estado, S.nombre, S.apellido
+                        FROM Turnos T
+                        LEFT JOIN Socios S ON T.socios_id = S.id
+                        ORDER BY T.fecha_hora ASC                
+                        '''
+                cursor.execute(query)
+            resultado = [
+                {
+                    "id_turno" : r[0],
+                    "especialidad" : r[1],
+                    "profsional" : r[2],
+                    "fecha_hora" : r[3],
+                    "estado": r[4],
+                    "paciente": f"{r[5]} {r[6]}" if  r[5] else "Sin asignar (Disponible)"  
+                } for r in cursor.fetchall()
+            ]
+            return resultado
+        finally:
+            cursor.close()
+
+    
+     def actualizar_estado_turno_recepcion(self, id_turno: str, nuevo_estado: str):
+         cursor = self.conn.cursor()
+         try:
+             cursor.execute("SELECT id FROM Turnos WHERE id = ?", (nuevo_estado,))
+             self.conn.commit()
+             return cursor.rowcount > 0
+         except sqlite3.Error as e:
+             print(f"Error al actualizar estado del turno: {e}")
+             return False
+         finally:
+             cursor.close()
+   
+     
 # --- 3. FASTAPI ---
 app = FastAPI()
 mi_clinica = Clinica()
@@ -674,6 +723,9 @@ class AdminSocioUpdateIn(BaseModel):
     telefono: Optional[str] = None
     domicilio: Optional[str] = None
     codigo_postal: Optional[str] = None
+
+class CambiarEstadoTurnoIn(BaseModel):
+    estado: str
 
 # --- ENDPOINTS ---
 
@@ -809,6 +861,18 @@ def admin_eliminar_medico(id_medico: str):
 @app.get("/api/admin/estadisticas")
 def admin_obetener_estadisticas():
     return mi_clinica.obtener_estadisticas_sistema()
+
+# ========= ENDPOINTS EXCLUSIVOS PARA RECEPCIONISTAS =========
+@app.get("/api/recepcion/turnos")
+def recepcion_ver_agenda(fecha: Optional[str] = None):
+    return mi_clinica.listar_turnos_para_recepcion(fecha)
+
+@app.patch("/api/recepcion/turnos/{id_turno}/estado")
+def recepcion_cambiar_estado(id_turno: str, datos: CambiarEstadoTurnoIn):
+    if not mi_clinica.actualizar_estado_turno_recepcion(id_turno, datos.estado):
+        raise HTTPException(status_code=404, details= "Turno no encontado")
+    return {"status": "success", "mensaje": "estado del turno actualizado con exito"} 
+
 
 # ==================== SERVIR FRONTEND ====================
 
